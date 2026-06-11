@@ -37,7 +37,7 @@
 	}
 
 	function onKeydown(e: KeyboardEvent) {
-		if (e.key === 't' && e.altKey && (e.ctrlKey || e.metaKey)) {
+		if (e.code === 'KeyT' && e.altKey && (e.ctrlKey || e.metaKey)) {
 			e.preventDefault();
 			window.open('/notes', 'md-present-notes', 'popup');
 			return;
