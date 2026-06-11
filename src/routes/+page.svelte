@@ -13,6 +13,13 @@
 		channel = new BroadcastChannel('md-present');
 		channel.onmessage = (e) => {
 			if (e.data?.type === 'request-slide') broadcast();
+			else if (e.data?.type === 'nav') {
+				if (e.data.to === 'next') goTo(current + 1);
+				else if (e.data.to === 'prev') goTo(current - 1);
+				else if (e.data.to === 'first') goTo(0);
+				else if (e.data.to === 'last') goTo(total - 1);
+				else if (typeof e.data.index === 'number') goTo(e.data.index);
+			}
 		};
 		broadcast();
 		return () => channel.close();
@@ -72,6 +79,16 @@
 	let animation = $derived(
 		slide.directives.find((d) => d.name === 'animate')?.value ?? 'none'
 	);
+
+	const corners = ['top left', 'top right', 'bottom left', 'bottom right'];
+	// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	let gradient = $derived(
+		(() => {
+			void current;
+			const corner = corners[Math.floor(Math.random() * corners.length)];
+			return `linear-gradient(to ${corner}, rgb(0, 0, 0), rgb(10, 10, 10))`;
+		})()
+	);
 </script>
 
 <svelte:window onkeydown={onKeydown} />
@@ -80,6 +97,7 @@
 	{#key current}
 		<div
 			class="slide"
+			style:background={gradient}
 			class:anim-fade={animation === 'fade'}
 			class:anim-slide-fwd={animation === 'slide-in' && direction === 'fwd'}
 			class:anim-slide-bwd={animation === 'slide-in' && direction === 'bwd'}
@@ -90,11 +108,9 @@
 			{@html html}
 		</div>
 	{/key}
-	<footer>
-		<button onclick={() => goTo(current - 1)} disabled={current === 0}>←</button>
-		<span class="counter">{current + 1} / {total}</span>
-		<button onclick={() => goTo(current + 1)} disabled={current === total - 1}>→</button>
-	</footer>
+	<div class="progress-bar">
+		<div class="progress-fill" style:width="{((current + 1) / total) * 100}%"></div>
+	</div>
 </div>
 
 <style>
@@ -172,9 +188,14 @@
 	.slide :global(h1) {
 		font-size: 3rem;
 		margin: 0 0 1.5rem;
-		color: #e94560;
-		border-bottom: 2px solid #e9456040;
+		color: rgb(51, 167, 181);
+		border-bottom: 2px solid rgba(51, 167, 181, 0.3);
 		padding-bottom: 0.5rem;
+	}
+
+	.slide :global(h2),
+	.slide :global(h3) {
+		color: rgb(51, 167, 181);
 	}
 
 	.slide :global(p) {
@@ -210,47 +231,23 @@
 	}
 
 	.slide :global(blockquote) {
-		border-left: 4px solid #e94560;
+		border-left: 4px solid rgb(51, 167, 181);
 		margin: 1rem 0;
 		padding: 0.5rem 1.5rem;
-		color: #b0b0b0;
+		color: #d8d8d8;
 		font-style: italic;
 	}
 
 	/* ── Footer ── */
 
-	footer {
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		gap: 2rem;
-		padding: 1rem;
-		background: #16213e;
+	.progress-bar {
+		height: 8px;
+		background: rgba(181, 65, 51, 0.15);
 	}
 
-	footer button {
-		background: #e94560;
-		color: white;
-		border: none;
-		border-radius: 6px;
-		padding: 0.5rem 1.2rem;
-		font-size: 1.2rem;
-		cursor: pointer;
-		transition: opacity 0.2s;
-	}
-
-	footer button:disabled {
-		opacity: 0.3;
-		cursor: default;
-	}
-
-	footer button:not(:disabled):hover {
-		opacity: 0.85;
-	}
-
-	.counter {
-		font-size: 1rem;
-		color: #888;
-		font-variant-numeric: tabular-nums;
+	.progress-fill {
+		height: 100%;
+		background: linear-gradient(to right, rgb(181, 65, 51), rgb(232, 138, 124));
+		transition: width 0.4s ease;
 	}
 </style>
