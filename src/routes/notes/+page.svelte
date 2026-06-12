@@ -12,12 +12,22 @@
 	let total = $state(0);
 	let notes = $state('');
 	let directives = $state<Directive[]>([]);
+	let content = $state('');
+	let prevContent = $state<string | null>(null);
+	let nextContent = $state<string | null>(null);
 
 	let html = $derived(
 		notes
 			? (marked.parse(notes) as string)
 			: '<p class="empty">No presenter notes for this slide.</p>'
 	);
+
+	let title = $derived(
+		content.match(/^#\s+(.+)$/m)?.[1] ?? `Slide ${index + 1}`
+	);
+	let slideHtml = $derived(marked.parse(content) as string);
+	let prevHtml = $derived(prevContent ? (marked.parse(prevContent) as string) : null);
+	let nextHtml = $derived(nextContent ? (marked.parse(nextContent) as string) : null);
 
 	let channel: BroadcastChannel;
 
@@ -30,6 +40,9 @@
 				total = e.data.total;
 				notes = e.data.notes;
 				directives = e.data.directives ?? [];
+				content = e.data.content ?? '';
+				prevContent = e.data.prevContent ?? null;
+				nextContent = e.data.nextContent ?? null;
 			}
 		};
 
@@ -80,7 +93,7 @@
 
 <div class="notes-view">
 	<header>
-		<h2>Presenter Notes</h2>
+		<h2>{title}</h2>
 		{#if total > 0}
 			<span class="counter">Slide {index + 1} / {total}</span>
 		{/if}
@@ -96,6 +109,25 @@
 			{/each}
 		</div>
 	{/if}
+
+	<div class="slide-previews">
+		<div class="preview prev" class:empty={!prevHtml}>
+			{#if prevHtml}
+				<span class="preview-label">Previous</span>
+				<div class="preview-slide"><div class="preview-slide-inner">{@html prevHtml}</div></div>
+			{/if}
+		</div>
+		<div class="preview current">
+			<span class="preview-label">Current</span>
+			<div class="preview-slide"><div class="preview-slide-inner">{@html slideHtml}</div></div>
+		</div>
+		<div class="preview next" class:empty={!nextHtml}>
+			{#if nextHtml}
+				<span class="preview-label">Next</span>
+				<div class="preview-slide"><div class="preview-slide-inner">{@html nextHtml}</div></div>
+			{/if}
+		</div>
+	</div>
 
 	<div class="notes-content">
 		{@html html}
@@ -164,6 +196,102 @@
 
 	.directive-icon {
 		font-size: 0.8rem;
+	}
+
+	/* ── Slide previews ── */
+
+	.slide-previews {
+		display: flex;
+		gap: 1rem;
+		padding: 1rem 2rem;
+		background: #ebe5d9;
+		border-bottom: 1px solid #d5cfc3;
+		align-items: flex-start;
+		flex-shrink: 0;
+	}
+
+	.preview {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.preview.current {
+		flex: 1.5;
+	}
+
+	.preview.empty {
+		visibility: hidden;
+	}
+
+	.preview-label {
+		display: block;
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: #999;
+		margin-bottom: 0.4rem;
+	}
+
+	.preview-slide {
+		background: #1a1a2e;
+		color: #e0e0e0;
+		border-radius: 6px;
+		overflow: hidden;
+		aspect-ratio: 16 / 9;
+		position: relative;
+	}
+
+	.preview-slide-inner {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 133%;
+		height: 133%;
+		transform: scale(0.75);
+		transform-origin: top left;
+		padding: 2rem 2.5rem;
+		font-size: 1.4rem;
+		line-height: 1.6;
+	}
+
+	.preview.current .preview-slide {
+		box-shadow: 0 0 0 2px #32B0A2;
+	}
+
+	.preview-slide-inner :global(h1) {
+		font-size: 2.8rem;
+		margin: 0 0 0.3rem;
+		color: #32B0A2;
+		border-bottom: 1px solid rgba(50, 176, 162, 0.3);
+		padding-bottom: 0.2rem;
+	}
+
+	.preview-slide-inner :global(h2),
+	.preview-slide-inner :global(h3) {
+		font-size: 2rem;
+		color: #32B0A2;
+	}
+
+	.preview-slide-inner :global(p) {
+		font-size: 1.4rem;
+		margin: 0.2rem 0;
+	}
+
+	.preview-slide-inner :global(ul),
+	.preview-slide-inner :global(ol) {
+		font-size: 1.4rem;
+		padding-left: 1em;
+	}
+
+	.preview-slide-inner :global(pre) {
+		background: #16213e;
+		padding: 1rem;
+		border-radius: 6px;
+		font-size: 1.2rem;
+	}
+
+	.preview-slide-inner :global(code) {
+		font-size: 1.2rem;
 	}
 
 	/* ── Notes content ── */
