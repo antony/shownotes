@@ -83,8 +83,15 @@
 		}
 	}
 
+	function inlineSvgBlocks(raw: string): string {
+		return raw.replace(
+			/<pre><code class="language-!svg">([\s\S]*?)<\/code><\/pre>/g,
+			(_, body) => body.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+		);
+	}
+
 	let slide = $derived(data.slides[current]);
-	let html = $derived(marked.parse(slide.content) as string);
+	let html = $derived(inlineSvgBlocks(marked.parse(slide.content) as string));
 	let animation = $derived(
 		slide.directives.find((d) => d.name === 'animate')?.value ?? 'none'
 	);
