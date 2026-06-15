@@ -25,16 +25,15 @@ Remember to demo the **keyboard navigation** at the end.
 Walk through each bullet point. Emphasise that the `!---` / `---!` blocks are **not shown** on the slide itself.
 ---!
 
-# Code Example
+# Architecture
 
-Here's some code:
+Here's how md-present works:
 
-```js
-const greeting = 'Hello, world!';
-console.log(greeting);
-```
+[Architecture diagram][architecture]
 
-Pretty neat, right?
+Markdown goes in, slides come out.
+
+[!svg@architecture]: architecture.svg "How md-present works"
 
 !---
 @animate zoom

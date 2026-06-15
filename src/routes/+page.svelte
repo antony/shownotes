@@ -83,15 +83,14 @@
 		}
 	}
 
-	function inlineSvgBlocks(raw: string): string {
-		return raw.replace(
-			/<pre><code class="language-!svg">([\s\S]*?)<\/code><\/pre>/g,
-			(_, body) => body.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-		);
-	}
-
 	let slide = $derived(data.slides[current]);
-	let html = $derived(inlineSvgBlocks(marked.parse(slide.content) as string));
+	let html = $derived.by(() => {
+		let result = marked.parse(slide.content) as string;
+		for (const svg of slide.svgs) {
+			result = result.replace(`<div id="${svg.id}"></div>`, svg.html);
+		}
+		return result;
+	});
 	let animation = $derived(
 		slide.directives.find((d) => d.name === 'animate')?.value ?? 'none'
 	);
@@ -260,6 +259,30 @@
 
 	.slide :global(a) {
 		color: coral;
+	}
+
+	.slide :global(.svg-embed) {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin: 1.5rem 0;
+	}
+
+	.slide :global(.svg-embed svg) {
+		max-width: 100%;
+		height: auto;
+	}
+
+	.slide :global(.svg-embed figcaption) {
+		margin-top: 0.6rem;
+		font-size: 0.95rem;
+		color: #888;
+		font-style: italic;
+	}
+
+	.slide :global(.svg-error) {
+		color: #e94560;
+		font-style: italic;
 	}
 
 	.slide :global(blockquote) {

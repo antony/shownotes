@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 200" width="480" height="200">
+  <style>
+    text { font-family: system-ui, sans-serif; fill: #e0e0e0; font-size: 13px; }
+    .box { rx: 8; ry: 8; stroke-width: 2; }
+    .arrow { stroke: #888; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+  </style>
+  <defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#888"/>
+    </marker>
+  </defs>
+  <rect x="10" y="70" width="110" height="60" class="box" fill="#16213e" stroke="#e94560"/>
+  <text x="65" y="105" text-anchor="middle">Markdown</text>
+  <line x1="120" y1="100" x2="170" y2="100" class="arrow"/>
+  <rect x="175" y="70" width="110" height="60" class="box" fill="#16213e" stroke="#e94560"/>
+  <text x="230" y="105" text-anchor="middle">Parser</text>
+  <line x1="285" y1="100" x2="335" y2="100" class="arrow"/>
+  <rect x="340" y="70" width="130" height="60" class="box" fill="#16213e" stroke="#e94560"/>
+  <text x="405" y="105" text-anchor="middle">Slide Renderer</text>
+</svg>
