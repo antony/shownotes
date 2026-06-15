@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { marked } from 'marked';
+	import markedFootnote from 'marked-footnote';
+
+	marked.use(markedFootnote());
 	import { onMount } from 'svelte';
 
 
