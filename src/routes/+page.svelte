@@ -63,6 +63,7 @@
 		channel.onmessage = (e) => {
 			if (e.data?.type === 'request-slide') broadcast();
 			else if (e.data?.type === 'toggle-crawl') toggleCrawl();
+			else if (e.data?.type === 'confetti') fireConfetti();
 			else if (e.data?.type === 'nav') {
 				if (e.data.to === 'next') goTo(current + 1);
 				else if (e.data.to === 'prev') goTo(current - 1);
@@ -127,6 +128,62 @@
 				goTo(total - 1);
 				break;
 		}
+	}
+
+	function fireConfetti() {
+		const canvas = document.createElement('canvas');
+		canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999';
+		canvas.width = window.innerWidth;
+		canvas.height = window.innerHeight;
+		document.body.appendChild(canvas);
+		const ctx = canvas.getContext('2d')!;
+
+		const colors = ['#32B0A2', '#e88a7c', '#f0c040', '#6ec6ff', '#ff6b9d', '#c084fc', '#fb923c'];
+		const particles: { x: number; y: number; vx: number; vy: number; w: number; h: number; color: string; rot: number; vr: number; gravity: number; opacity: number }[] = [];
+
+		for (let i = 0; i < 150; i++) {
+			const angle = Math.random() * Math.PI * 2;
+			const speed = 4 + Math.random() * 12;
+			particles.push({
+				x: canvas.width / 2,
+				y: canvas.height / 2,
+				vx: Math.cos(angle) * speed,
+				vy: Math.sin(angle) * speed - 6,
+				w: 4 + Math.random() * 8,
+				h: 4 + Math.random() * 6,
+				color: colors[Math.floor(Math.random() * colors.length)],
+				rot: Math.random() * Math.PI * 2,
+				vr: (Math.random() - 0.5) * 0.3,
+				gravity: 0.12 + Math.random() * 0.08,
+				opacity: 1
+			});
+		}
+
+		let frame: number;
+		function animate() {
+			ctx.clearRect(0, 0, canvas.width, canvas.height);
+			let alive = false;
+			for (const p of particles) {
+				p.x += p.vx;
+				p.y += p.vy;
+				p.vy += p.gravity;
+				p.vx *= 0.99;
+				p.rot += p.vr;
+				p.opacity -= 0.008;
+				if (p.opacity <= 0) continue;
+				alive = true;
+				ctx.save();
+				ctx.translate(p.x, p.y);
+				ctx.rotate(p.rot);
+				ctx.globalAlpha = Math.max(0, p.opacity);
+				ctx.fillStyle = p.color;
+				ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+				ctx.restore();
+			}
+			if (alive) frame = requestAnimationFrame(animate);
+			else canvas.remove();
+		}
+		frame = requestAnimationFrame(animate);
 	}
 
 	let slide = $derived(data.slides[current]);

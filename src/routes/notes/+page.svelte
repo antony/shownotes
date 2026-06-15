@@ -61,6 +61,11 @@
 		}
 
 		switch (e.key) {
+			case 'c':
+			case 'C':
+				e.preventDefault();
+				channel?.postMessage({ type: 'confetti' });
+				break;
 			case 'ArrowRight':
 			case 'ArrowDown':
 			case ' ':
