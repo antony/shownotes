@@ -67,6 +67,42 @@ function extractSvgDefs(text: string): { cleaned: string; defs: Map<string, SvgD
 	return { cleaned, defs };
 }
 
+/**
+ * Scope CSS @keyframes inside an SVG so multiple inlined SVGs don't clash.
+ * Prefixes each @keyframes name and its references in animation/animation-name properties.
+ */
+function scopeSvgAnimations(svg: string, scope: string): string {
+	// Collect all @keyframes names
+	const keyframeNames = new Set<string>();
+	svg.replace(/@keyframes\s+([\w-]+)/g, (_m, name: string) => {
+		keyframeNames.add(name);
+		return _m;
+	});
+
+	if (keyframeNames.size === 0) return svg;
+
+	let result = svg;
+	for (const name of keyframeNames) {
+		const scoped = `${scope}-${name}`;
+		// Rename @keyframes declaration
+		result = result.replace(
+			new RegExp(`@keyframes\\s+${escapeRegex(name)}`, 'g'),
+			`@keyframes ${scoped}`
+		);
+		// Rename references in animation and animation-name properties
+		// Matches: animation: name ..., animation-name: name
+		result = result.replace(
+			new RegExp(`(animation(?:-name)?\\s*:[^;]*?)\\b${escapeRegex(name)}\\b`, 'g'),
+			`$1${scoped}`
+		);
+	}
+	return result;
+}
+
+function escapeRegex(s: string): string {
+	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 async function resolveSvgRefs(
 	content: string,
 	defs: Map<string, SvgDef>,
@@ -107,9 +143,10 @@ async function resolveSvgRefs(
 		} else {
 			const label = def.title || text;
 			const caption = def.title ? `\n<figcaption>${def.title}</figcaption>` : '';
+			const scoped = scopeSvgAnimations(svg, placeholderId);
 			svgs.push({
 				id: placeholderId,
-				html: `<figure class="svg-embed" role="img" aria-label="${label}">\n${svg}${caption}\n</figure>`
+				html: `<figure class="svg-embed" role="img" aria-label="${label}">\n${scoped}${caption}\n</figure>`
 			});
 		}
 

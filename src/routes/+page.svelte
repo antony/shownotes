@@ -2,11 +2,53 @@
 	import { marked } from 'marked';
 	import { onMount } from 'svelte';
 
+
 	let { data } = $props();
 	let current = $state(0);
 	let direction = $state<'fwd' | 'bwd'>('fwd');
 	let spinCount = $state(0);
 	const total = data.slides.length;
+
+	// Star Wars crawl mode (triggered from notes page via BroadcastChannel)
+	let crawling = $state(false);
+	let crawlEl: HTMLDivElement | undefined = $state();
+	let crawlRaf = 0;
+
+	let allHtml = $derived.by(() => {
+		return data.slides.map((s) => {
+			let result = marked.parse(s.content) as string;
+			for (const svg of s.svgs) {
+				result = result.replace(`<div id="${svg.id}"></div>`, svg.html);
+			}
+			return result;
+		});
+	});
+
+	function toggleCrawl() {
+		crawling = !crawling;
+		if (crawling) {
+			requestAnimationFrame(() => startCrawl());
+		} else {
+			cancelAnimationFrame(crawlRaf);
+		}
+	}
+
+	function startCrawl() {
+		if (!crawlEl) return;
+		let lastTime = 0;
+		const speed = 40; // pixels per second
+
+		function tick(time: number) {
+			if (!crawling || !crawlEl) return;
+			if (lastTime) {
+				const delta = (time - lastTime) / 1000;
+				crawlEl.scrollTop += speed * delta;
+			}
+			lastTime = time;
+			crawlRaf = requestAnimationFrame(tick);
+		}
+		crawlRaf = requestAnimationFrame(tick);
+	}
 
 	let channel: BroadcastChannel;
 
@@ -17,6 +59,7 @@
 		channel = new BroadcastChannel('md-present');
 		channel.onmessage = (e) => {
 			if (e.data?.type === 'request-slide') broadcast();
+			else if (e.data?.type === 'toggle-crawl') toggleCrawl();
 			else if (e.data?.type === 'nav') {
 				if (e.data.to === 'next') goTo(current + 1);
 				else if (e.data.to === 'prev') goTo(current - 1);
@@ -107,7 +150,24 @@
 
 <svelte:window onkeydown={onKeydown} />
 
-<div class="presentation">
+{#if crawling}
+<div class="crawl-overlay">
+	<div class="crawl-viewport" bind:this={crawlEl}>
+		<div class="crawl-content">
+			{#each allHtml as slideHtml, i}
+				<div class="crawl-slide">
+					{@html slideHtml}
+				</div>
+				{#if i < total - 1}
+					<hr class="crawl-divider" />
+				{/if}
+			{/each}
+		</div>
+	</div>
+</div>
+{/if}
+
+<div class="presentation" class:hidden={crawling}>
 	{#key current}
 		<div
 			class="slide"
@@ -146,6 +206,101 @@
 		background: #1a1a2e;
 		color: #e0e0e0;
 		font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+	}
+
+	.hidden {
+		display: none !important;
+	}
+
+	/* ── Star Wars crawl ── */
+
+	.crawl-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 100;
+		background: #000;
+		perspective: 400px;
+		overflow: hidden;
+	}
+
+	.crawl-viewport {
+		position: absolute;
+		inset: 0;
+		overflow-y: auto;
+		scrollbar-width: none;
+		transform: rotateX(25deg);
+		transform-origin: 50% 100%;
+	}
+
+	.crawl-viewport::-webkit-scrollbar {
+		display: none;
+	}
+
+	.crawl-content {
+		max-width: 700px;
+		margin: 100vh auto 100vh;
+		padding: 0 2rem;
+		text-align: center;
+	}
+
+	.crawl-slide :global(h1) {
+		font-size: 2.4rem;
+		color: #ffd700;
+		margin: 0 0 1rem;
+	}
+
+	.crawl-slide :global(h2),
+	.crawl-slide :global(h3) {
+		color: #ffd700;
+	}
+
+	.crawl-slide :global(p) {
+		font-size: 1.3rem;
+		line-height: 1.8;
+		color: #ffd700;
+	}
+
+	.crawl-slide :global(ul),
+	.crawl-slide :global(ol) {
+		font-size: 1.2rem;
+		line-height: 2;
+		color: #ffd700;
+		text-align: left;
+		display: inline-block;
+	}
+
+	.crawl-slide :global(code) {
+		background: rgba(255, 215, 0, 0.1);
+		color: #ffd700;
+		padding: 0.15em 0.4em;
+		border-radius: 4px;
+	}
+
+	.crawl-slide :global(pre) {
+		background: rgba(255, 215, 0, 0.05);
+		padding: 1.2rem;
+		border-radius: 8px;
+		text-align: left;
+	}
+
+	.crawl-slide :global(pre code) {
+		background: none;
+	}
+
+	.crawl-slide :global(blockquote) {
+		border-left: 3px solid #ffd700;
+		color: #ffd70099;
+		padding: 0.5rem 1.5rem;
+		margin: 1rem auto;
+		text-align: left;
+		font-style: italic;
+	}
+
+	.crawl-divider {
+		border: none;
+		border-top: 1px solid #ffd70030;
+		margin: 3rem auto;
+		width: 60%;
 	}
 
 	.presentation {
@@ -270,6 +425,7 @@
 
 	.slide :global(.svg-embed svg) {
 		max-width: 100%;
+		max-height: 60vh;
 		height: auto;
 	}
 

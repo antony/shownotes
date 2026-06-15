@@ -54,6 +54,12 @@ This slide has no special talking points — just show the code rendering.
 Point out each formatting style. The blockquote is a nice touch.
 ---!
 
+# Animation Test
+
+[Animated SVG][test-anim]
+
+[!svg@test-anim]: test-anim.svg
+
 # Thank You
 
 That's all folks. 🎉

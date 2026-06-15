@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <style>
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(2.5); opacity: 0.3; }
+    }
+    @keyframes stretch {
+      0%, 100% { transform: scaleX(1); }
+      50% { transform: scaleX(4); }
+    }
+    .dot {
+      transform-origin: 100px 100px;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .bar {
+      transform-origin: 100px 155px;
+      animation: stretch 2s ease-in-out infinite;
+    }
+  </style>
+  <circle class="dot" cx="100" cy="100" r="20" fill="#e94560" />
+  <rect class="bar" x="90" y="150" width="20" height="10" fill="#32B0A2" />
+</svg>

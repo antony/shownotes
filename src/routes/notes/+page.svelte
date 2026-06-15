@@ -51,6 +51,12 @@
 	});
 
 	function onKeydown(e: KeyboardEvent) {
+		if (e.key === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+			e.preventDefault();
+			channel?.postMessage({ type: 'toggle-crawl' });
+			return;
+		}
+
 		switch (e.key) {
 			case 'ArrowRight':
 			case 'ArrowDown':
